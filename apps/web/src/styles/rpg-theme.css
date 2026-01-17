@@ -1,0 +1,185 @@
+/* RPG 遊戲風格主題 */
+
+/* ===== 顏色變數 ===== */
+:root {
+  /* 主要色彩 */
+  --color-primary: #8B5A2B;        /* 木頭棕 - 邊框 */
+  --color-secondary: #DAA520;      /* 金色 - 強調 */
+  --color-accent: #4169E1;         /* 皇家藍 - 互動 */
+
+  /* 背景色 */
+  --bg-parchment: #F5DEB3;         /* 羊皮紙 */
+  --bg-dark: #2C1810;              /* 深木紋 */
+  --bg-panel: rgba(139, 69, 19, 0.9); /* 半透明面板 */
+
+  /* 狀態色 */
+  --color-hp: #DC143C;             /* HP 紅 */
+  --color-hp-low: #8B0000;         /* HP 低 */
+  --color-mp: #4169E1;             /* MP 藍 */
+  --color-exp: #FFD700;            /* EXP 金 */
+  --color-success: #228B22;        /* 成功綠 */
+  --color-error: #B22222;          /* 錯誤紅 */
+
+  /* 稀有度色彩 */
+  --rarity-common: #9E9E9E;        /* 灰 */
+  --rarity-uncommon: #4CAF50;      /* 綠 */
+  --rarity-rare: #2196F3;          /* 藍 */
+  --rarity-epic: #9C27B0;          /* 紫 */
+  --rarity-legendary: #FF9800;     /* 橙/金 */
+
+  /* 觸控優化 */
+  --touch-target-min: 48px;
+}
+
+/* ===== 字型 ===== */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+
+.font-game-title {
+  font-family: 'Cinzel', 'Noto Sans TC', serif;
+}
+
+/* ===== 動畫 ===== */
+@keyframes rpg-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--color-secondary), 0 0 10px var(--color-secondary);
+  }
+  50% {
+    box-shadow: 0 0 15px var(--color-secondary), 0 0 30px var(--color-secondary);
+  }
+}
+
+@keyframes rpg-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes rpg-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes rpg-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes rpg-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes damage-number {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(1.5);
+  }
+}
+
+/* ===== 工具類別 ===== */
+.rpg-glow {
+  animation: rpg-glow 2s infinite;
+}
+
+.rpg-pulse {
+  animation: rpg-pulse 1.5s infinite;
+}
+
+.rpg-blink {
+  animation: rpg-blink 0.5s infinite;
+}
+
+.rpg-float {
+  animation: rpg-float 2s ease-in-out infinite;
+}
+
+.rpg-shake {
+  animation: rpg-shake 0.3s ease-in-out;
+}
+
+/* 稀有度發光 */
+.rarity-legendary {
+  animation: rpg-glow 2s infinite;
+  --tw-shadow-color: var(--rarity-legendary);
+}
+
+.rarity-epic {
+  box-shadow: 0 0 10px var(--rarity-epic);
+}
+
+.rarity-rare {
+  box-shadow: 0 0 8px var(--rarity-rare);
+}
+
+/* ===== 觸控優化 ===== */
+.touch-target {
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+}
+
+.touch-feedback {
+  transition: transform 0.1s, opacity 0.1s;
+}
+
+.touch-feedback:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+/* 防止 iOS 雙擊縮放 */
+* {
+  touch-action: manipulation;
+}
+
+/* 遊戲畫布禁用所有手勢 */
+.game-canvas {
+  touch-action: none;
+}
+
+/* ===== 漣漪效果 ===== */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 1s;
+}
+
+.ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* ===== 傷害數字 ===== */
+.damage-number {
+  animation: damage-number 1s ease-out forwards;
+  font-weight: bold;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
+}
+
+.damage-number.critical {
+  color: #FFD700;
+  font-size: 1.5em;
+}
+
+.damage-number.heal {
+  color: #32CD32;
+}
