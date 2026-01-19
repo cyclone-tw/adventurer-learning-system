@@ -15,6 +15,7 @@ import StudentAvatar from './pages/student/Avatar';
 import StudentClasses from './pages/student/Classes';
 import StudentDailyTasks from './pages/student/DailyTasks';
 import StudentExploration from './pages/student/Exploration';
+import MapDemo from './pages/student/MapDemo';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import TeacherQuestions from './pages/teacher/Questions';
 import QuestionEditor from './pages/teacher/QuestionEditor';
@@ -108,6 +109,7 @@ function App() {
       {/* Public Routes */}
       <Route path="/" element={<HomePage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/demo/map" element={<MapDemo />} />
 
       {/* Student Routes */}
       <Route
