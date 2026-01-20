@@ -7,6 +7,8 @@ import {
   getStudentValidation,
   getStudentAttempts,
   getStudentAttemptsValidation,
+  updateStudent,
+  updateStudentValidation,
 } from '../controllers/studentController.js';
 
 const router = Router();
@@ -19,6 +21,9 @@ router.get('/', listStudentsValidation, listStudents);
 
 // GET /students/:studentId - Get student details
 router.get('/:studentId', getStudentValidation, getStudent);
+
+// PATCH /students/:studentId - Update student info
+router.patch('/:studentId', updateStudentValidation, updateStudent);
 
 // GET /students/:studentId/attempts - Get student's attempt history
 router.get('/:studentId/attempts', getStudentAttemptsValidation, getStudentAttempts);

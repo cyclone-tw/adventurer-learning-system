@@ -175,6 +175,12 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface UpdateStudentInput {
+  displayName?: string;
+  email?: string;
+  password?: string;
+}
+
 export const studentsService = {
   // List all students
   async list(params: ListStudentsParams = {}): Promise<PaginatedResponse<StudentListItem>> {
@@ -190,6 +196,17 @@ export const studentsService = {
   // Get student details
   async get(studentId: string): Promise<StudentDetail> {
     const response = await api.get<ApiResponse<StudentDetail>>(`/students/${studentId}`);
+    return response.data.data;
+  },
+
+  // Update student info
+  async update(
+    studentId: string,
+    data: UpdateStudentInput
+  ): Promise<{ message: string; student: { _id: string; displayName: string; email: string } }> {
+    const response = await api.patch<
+      ApiResponse<{ message: string; student: { _id: string; displayName: string; email: string } }>
+    >(`/students/${studentId}`, data);
     return response.data.data;
   },
 

@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { query, param, validationResult } from 'express-validator';
+import { query, param, body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import QuestionAttempt from '../models/QuestionAttempt.js';
@@ -22,6 +22,10 @@ export const listStudentsValidation = [
 ];
 
 export const getStudentValidation = [
+  param('studentId').isMongoId().withMessage('無效的學生 ID'),
+];
+
+export const updateStudentValidation = [
   param('studentId').isMongoId().withMessage('無效的學生 ID'),
 ];
 
@@ -670,6 +674,92 @@ export const getStudentAttempts = async (
 
     const totalPages = Math.ceil(total / limit);
     sendPaginated(res, attempts, { page, limit, total, totalPages });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PATCH /students/:studentId - Update student info (for teachers/admins)
+export const updateStudent = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    checkValidation(req);
+
+    if (!req.auth) {
+      throw AppError.unauthorized('請先登入', ErrorCodes.AUTH_UNAUTHORIZED);
+    }
+
+    const { studentId } = req.params;
+    const { displayName, email, password } = req.body;
+
+    // Find the student
+    const student = await User.findOne({
+      _id: studentId,
+      role: 'student',
+    });
+
+    if (!student) {
+      throw AppError.notFound('找不到該學生', ErrorCodes.RESOURCE_NOT_FOUND);
+    }
+
+    // Build update object
+    const updateFields: {
+      displayName?: string;
+      email?: string;
+      passwordHash?: string;
+    } = {};
+
+    if (displayName && displayName.trim()) {
+      if (displayName.trim().length > 50) {
+        throw AppError.badRequest('名稱不能超過 50 個字元', ErrorCodes.VALIDATION_ERROR);
+      }
+      updateFields.displayName = displayName.trim();
+    }
+
+    if (email && email.trim()) {
+      const emailRegex = /^\S+@\S+\.\S+$/;
+      if (!emailRegex.test(email.trim())) {
+        throw AppError.badRequest('請提供有效的電子郵件', ErrorCodes.VALIDATION_ERROR);
+      }
+      // Check if email is already taken by another user
+      const existingUser = await User.findOne({
+        email: email.trim().toLowerCase(),
+        _id: { $ne: studentId },
+      });
+      if (existingUser) {
+        throw AppError.badRequest('此電子郵件已被使用', ErrorCodes.VALIDATION_ERROR);
+      }
+      updateFields.email = email.trim().toLowerCase();
+    }
+
+    if (password) {
+      if (password.length < 6) {
+        throw AppError.badRequest('密碼至少需要 6 個字元', ErrorCodes.VALIDATION_ERROR);
+      }
+      // Set passwordHash - the pre-save middleware will hash it
+      updateFields.passwordHash = password;
+    }
+
+    // Check if there are any updates
+    if (Object.keys(updateFields).length === 0) {
+      throw AppError.badRequest('請提供要更新的欄位', ErrorCodes.VALIDATION_ERROR);
+    }
+
+    // Update the fields
+    Object.assign(student, updateFields);
+    await student.save();
+
+    sendSuccess(res, {
+      message: '學生資料已更新',
+      student: {
+        _id: student._id,
+        displayName: student.displayName,
+        email: student.email,
+      },
+    });
   } catch (error) {
     next(error);
   }

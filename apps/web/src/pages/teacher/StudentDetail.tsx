@@ -25,6 +25,9 @@ import {
   Users,
   UserPlus,
   X,
+  Pencil,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import TeacherLayout from '../../components/layout/TeacherLayout';
 import Button from '../../components/ui/Button';
@@ -66,6 +69,17 @@ const StudentDetailPage = () => {
   const [selectedClassId, setSelectedClassId] = useState('');
   const [addingToClass, setAddingToClass] = useState(false);
   const [removingFromClass, setRemovingFromClass] = useState<string | null>(null);
+
+  // Edit student state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    displayName: '',
+    email: '',
+    password: '',
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Close export menu on outside click
   useEffect(() => {
@@ -157,6 +171,73 @@ const StudentDetailPage = () => {
       alert('移除失敗');
     } finally {
       setRemovingFromClass(null);
+    }
+  };
+
+  // Open edit modal
+  const handleOpenEditModal = () => {
+    if (studentData) {
+      setEditForm({
+        displayName: studentData.student.displayName,
+        email: studentData.student.email,
+        password: '',
+      });
+      setEditError(null);
+      setShowPassword(false);
+      setShowEditModal(true);
+    }
+  };
+
+  // Save student info
+  const handleSaveStudent = async () => {
+    if (!studentId) return;
+
+    // Validate
+    if (!editForm.displayName.trim()) {
+      setEditError('請輸入學生名稱');
+      return;
+    }
+    if (!editForm.email.trim()) {
+      setEditError('請輸入電子郵件');
+      return;
+    }
+    if (editForm.password && editForm.password.length < 6) {
+      setEditError('密碼至少需要 6 個字元');
+      return;
+    }
+
+    setSaving(true);
+    setEditError(null);
+    try {
+      const updateData: { displayName?: string; email?: string; password?: string } = {};
+
+      // Only include changed fields
+      if (editForm.displayName !== studentData?.student.displayName) {
+        updateData.displayName = editForm.displayName.trim();
+      }
+      if (editForm.email !== studentData?.student.email) {
+        updateData.email = editForm.email.trim();
+      }
+      if (editForm.password) {
+        updateData.password = editForm.password;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        setShowEditModal(false);
+        return;
+      }
+
+      await studentsService.update(studentId, updateData);
+
+      // Reload student data
+      const data = await studentsService.get(studentId);
+      setStudentData(data);
+      setShowEditModal(false);
+    } catch (err: any) {
+      console.error('Failed to update student:', err);
+      setEditError(err.response?.data?.message || '更新失敗');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -355,6 +436,15 @@ const StudentDetailPage = () => {
               <p className="text-gray-600">{student.email}</p>
             </div>
           </div>
+
+          {/* Edit Button */}
+          <button
+            onClick={handleOpenEditModal}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <Pencil className="w-4 h-4" />
+            編輯資料
+          </button>
 
           {/* Export Button */}
           <div className="relative" ref={exportMenuRef}>
@@ -1137,6 +1227,112 @@ const StudentDetailPage = () => {
                   </>
                 ) : (
                   '確認加入'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-bold">編輯學生資料</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {editError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {editError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  學生名稱
+                </label>
+                <input
+                  type="text"
+                  value={editForm.displayName}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, displayName: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="輸入學生名稱"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  電子郵件（帳號）
+                </label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, email: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="輸入電子郵件"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  新密碼（留空則不更改）
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={editForm.password}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, password: e.target.value })
+                    }
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="輸入新密碼（至少 6 個字元）"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowEditModal(false)}
+              >
+                取消
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSaveStudent}
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    儲存中...
+                  </>
+                ) : (
+                  '儲存變更'
                 )}
               </Button>
             </div>
