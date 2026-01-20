@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import User from '../models/User.js';
 import QuestionAttempt from '../models/QuestionAttempt.js';
 import PlayerStageProgress from '../models/PlayerStageProgress.js';
+import Class from '../models/Class.js';
 import { AuthRequest, ErrorCodes } from '../types/index.js';
 import { AppError } from '../utils/AppError.js';
 import { sendSuccess, sendPaginated } from '../utils/response.js';
@@ -94,16 +95,23 @@ export const listStudents = async (
 
     // Get attempt counts for all students in one query
     const studentIds = students.map((s) => s._id);
-    const attemptCounts = await QuestionAttempt.aggregate([
-      { $match: { studentId: { $in: studentIds } } },
-      {
-        $group: {
-          _id: '$studentId',
-          totalAttempts: { $sum: 1 },
-          correctAttempts: { $sum: { $cond: ['$isCorrect', 1, 0] } },
-          lastAttemptAt: { $max: '$createdAt' },
+    const [attemptCounts, allClasses] = await Promise.all([
+      QuestionAttempt.aggregate([
+        { $match: { studentId: { $in: studentIds } } },
+        {
+          $group: {
+            _id: '$studentId',
+            totalAttempts: { $sum: 1 },
+            correctAttempts: { $sum: { $cond: ['$isCorrect', 1, 0] } },
+            lastAttemptAt: { $max: '$createdAt' },
+          },
         },
-      },
+      ]),
+      // Get all classes that contain any of these students
+      Class.find(
+        { students: { $in: studentIds }, isActive: true },
+        { _id: 1, name: 1, students: 1 }
+      ).lean(),
     ]);
 
     // Create a map for quick lookup
@@ -111,9 +119,22 @@ export const listStudents = async (
       attemptCounts.map((a) => [a._id.toString(), a])
     );
 
-    // Enrich students with attempt data
+    // Create a map of student ID to their classes
+    const studentClassesMap = new Map<string, { _id: string; name: string }[]>();
+    for (const cls of allClasses) {
+      for (const studentId of cls.students) {
+        const sid = studentId.toString();
+        if (!studentClassesMap.has(sid)) {
+          studentClassesMap.set(sid, []);
+        }
+        studentClassesMap.get(sid)!.push({ _id: cls._id.toString(), name: cls.name });
+      }
+    }
+
+    // Enrich students with attempt data and class info
     const enrichedStudents = students.map((student) => {
       const attempts = attemptMap.get(student._id.toString());
+      const classes = studentClassesMap.get(student._id.toString()) || [];
       return {
         _id: student._id,
         displayName: student.displayName,
@@ -130,6 +151,7 @@ export const listStudents = async (
         lastAttemptAt: attempts?.lastAttemptAt || null,
         createdAt: student.createdAt,
         lastLoginAt: student.lastLoginAt,
+        classes, // 新增：學生所屬班級
       };
     });
 
@@ -155,15 +177,27 @@ export const getStudent = async (
 
     const { studentId } = req.params;
 
-    // Get student
-    const student = await User.findOne({
-      _id: studentId,
-      role: 'student',
-    }).select('-passwordHash').lean();
+    // Get student and their classes
+    const [student, studentClasses] = await Promise.all([
+      User.findOne({
+        _id: studentId,
+        role: 'student',
+      }).select('-passwordHash').lean(),
+      Class.find(
+        { students: new mongoose.Types.ObjectId(studentId), isActive: true },
+        { _id: 1, name: 1 }
+      ).lean(),
+    ]);
 
     if (!student) {
       throw AppError.notFound('找不到該學生', ErrorCodes.RESOURCE_NOT_FOUND);
     }
+
+    // Format classes
+    const classes = studentClasses.map((c) => ({
+      _id: c._id.toString(),
+      name: c.name,
+    }));
 
     // Get aggregated stats
     const [overallStats, subjectStats, unitStats, recentActivity, difficultyStats, weakUnits, stageProgress, learningTrend] = await Promise.all([
@@ -439,6 +473,7 @@ export const getStudent = async (
         gold: student.studentProfile?.gold || 0,
         createdAt: student.createdAt,
         lastLoginAt: student.lastLoginAt,
+        classes, // 新增：學生所屬班級
       },
       stats: {
         overview: {

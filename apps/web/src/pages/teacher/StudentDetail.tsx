@@ -22,6 +22,9 @@ import {
   FileText,
   FileSpreadsheet,
   Loader2,
+  Users,
+  UserPlus,
+  X,
 } from 'lucide-react';
 import TeacherLayout from '../../components/layout/TeacherLayout';
 import Button from '../../components/ui/Button';
@@ -32,6 +35,7 @@ import {
   StudentDetail as StudentDetailType,
   StudentAttempt,
 } from '../../services/students';
+import { classService, ClassListItem } from '../../services/classes';
 import { exportStudentDetailToPDF, exportStudentDetailToExcel } from '../../utils/exportUtils';
 
 const difficultyLabels: Record<string, { name: string; color: string }> = {
@@ -54,6 +58,14 @@ const StudentDetailPage = () => {
   // Export state
   const [isExporting, setIsExporting] = useState<'pdf' | 'excel' | null>(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Class management state
+  const [showClassModal, setShowClassModal] = useState(false);
+  const [allClasses, setAllClasses] = useState<ClassListItem[]>([]);
+  const [classesLoading, setClassesLoading] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [addingToClass, setAddingToClass] = useState(false);
+  const [removingFromClass, setRemovingFromClass] = useState<string | null>(null);
 
   // Close export menu on outside click
   useEffect(() => {
@@ -90,6 +102,61 @@ const StudentDetailPage = () => {
     } finally {
       setIsExporting(null);
       setShowExportMenu(false);
+    }
+  };
+
+  // Load classes when modal opens
+  useEffect(() => {
+    if (showClassModal && allClasses.length === 0) {
+      loadClasses();
+    }
+  }, [showClassModal]);
+
+  const loadClasses = async () => {
+    setClassesLoading(true);
+    try {
+      const result = await classService.listClasses(1, 100);
+      setAllClasses(result.classes);
+    } catch (err) {
+      console.error('Failed to load classes:', err);
+    } finally {
+      setClassesLoading(false);
+    }
+  };
+
+  // Add student to class
+  const handleAddToClass = async () => {
+    if (!studentId || !selectedClassId) return;
+    setAddingToClass(true);
+    try {
+      await classService.addStudents(selectedClassId, [studentId]);
+      // Reload student data to get updated classes
+      const data = await studentsService.get(studentId);
+      setStudentData(data);
+      setSelectedClassId('');
+      setShowClassModal(false);
+    } catch (err) {
+      console.error('Failed to add to class:', err);
+      alert('新增失敗');
+    } finally {
+      setAddingToClass(false);
+    }
+  };
+
+  // Remove student from class
+  const handleRemoveFromClass = async (classId: string, className: string) => {
+    if (!studentId || !confirm(`確定要將學生從「${className}」移除嗎？`)) return;
+    setRemovingFromClass(classId);
+    try {
+      await classService.removeStudent(classId, studentId);
+      // Reload student data to get updated classes
+      const data = await studentsService.get(studentId);
+      setStudentData(data);
+    } catch (err) {
+      console.error('Failed to remove from class:', err);
+      alert('移除失敗');
+    } finally {
+      setRemovingFromClass(null);
     }
   };
 
@@ -398,6 +465,53 @@ const StudentDetailPage = () => {
             </div>
           </Card>
         </div>
+
+        {/* Class Management */}
+        <Card variant="elevated" padding="lg">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              所屬班級
+            </h2>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowClassModal(true)}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              加入班級
+            </Button>
+          </div>
+
+          {student.classes && student.classes.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {student.classes.map((cls) => (
+                <div
+                  key={cls._id}
+                  className="inline-flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg"
+                >
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  <span className="text-blue-800 font-medium">{cls.name}</span>
+                  <button
+                    onClick={() => handleRemoveFromClass(cls._id, cls.name)}
+                    disabled={removingFromClass === cls._id}
+                    className="ml-1 p-1 text-blue-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                    title="從班級移除"
+                  >
+                    {removingFromClass === cls._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <X className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">此學生尚未加入任何班級</p>
+          )}
+        </Card>
 
         {/* Learning Suggestions */}
         {suggestions.length > 0 && (
@@ -930,6 +1044,105 @@ const StudentDetailPage = () => {
           </div>
         </Card>
       </div>
+
+      {/* Add to Class Modal */}
+      {showClassModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-bold">加入班級</h3>
+              <button
+                onClick={() => {
+                  setShowClassModal(false);
+                  setSelectedClassId('');
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4">
+              {classesLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500" />
+                  <p className="text-gray-500 mt-2">載入班級列表...</p>
+                </div>
+              ) : allClasses.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">尚無可加入的班級</p>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600 mb-3">
+                    選擇要將「{student.displayName}」加入的班級：
+                  </p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {allClasses
+                      .filter((cls) => !student.classes?.some((sc) => sc._id === cls._id))
+                      .map((cls) => (
+                        <label
+                          key={cls._id}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedClassId === cls._id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="classSelect"
+                            value={cls._id}
+                            checked={selectedClassId === cls._id}
+                            onChange={(e) => setSelectedClassId(e.target.value)}
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">{cls.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {cls.studentCount}/{cls.maxStudents} 位學生
+                              {cls.academicYearId && ` · ${cls.academicYearId.name}`}
+                            </p>
+                          </div>
+                        </label>
+                      ))}
+                    {allClasses.filter((cls) => !student.classes?.some((sc) => sc._id === cls._id))
+                      .length === 0 && (
+                      <p className="text-gray-500 text-center py-4">
+                        學生已加入所有班級
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowClassModal(false);
+                  setSelectedClassId('');
+                }}
+              >
+                取消
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleAddToClass}
+                disabled={!selectedClassId || addingToClass}
+              >
+                {addingToClass ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    處理中...
+                  </>
+                ) : (
+                  '確認加入'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </TeacherLayout>
   );
 };

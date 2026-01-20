@@ -17,6 +17,7 @@ export interface StudentListItem {
   lastAttemptAt: string | null;
   createdAt: string;
   lastLoginAt: string;
+  classes: { _id: string; name: string }[]; // 學生所屬班級
 }
 
 export interface StudentDetail {
@@ -31,6 +32,7 @@ export interface StudentDetail {
     gold: number;
     createdAt: string;
     lastLoginAt: string;
+    classes: { _id: string; name: string }[]; // 學生所屬班級
   };
   stats: {
     overview: {

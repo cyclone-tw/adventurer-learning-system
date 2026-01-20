@@ -151,7 +151,7 @@ export const getClass = async (
       teacherId: req.auth.userId,
     })
       .populate('academicYearId', 'name')
-      .populate('students', 'name email avatar studentProfile.level studentProfile.exp')
+      .populate('students', 'displayName email avatarUrl studentProfile.level studentProfile.exp')
       .lean();
 
     if (!classData) {

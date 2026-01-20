@@ -7,13 +7,16 @@ import {
   RefreshCw,
   Settings,
   UserMinus,
+  UserPlus,
   Check,
   Search,
   Star,
+  X,
 } from 'lucide-react';
 import { TeacherLayout } from '../../components/layout';
 import { Card, Button } from '../../components/ui';
 import { classService, ClassData, UpdateClassInput } from '../../services/classes';
+import { studentsService, StudentListItem } from '../../services/students';
 
 const ClassDetail = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -23,6 +26,7 @@ const ClassDetail = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddStudentsModal, setShowAddStudentsModal] = useState(false);
   const [removingStudent, setRemovingStudent] = useState<string | null>(null);
 
   useEffect(() => {
@@ -61,8 +65,8 @@ const ClassDetail = () => {
     }
   };
 
-  const handleRemoveStudent = async (studentId: string, studentName: string) => {
-    if (!classData || !confirm(`確定要將「${studentName}」移出班級嗎？`)) return;
+  const handleRemoveStudent = async (studentId: string, displayName: string) => {
+    if (!classData || !confirm(`確定要將「${displayName}」移出班級嗎？`)) return;
 
     setRemovingStudent(studentId);
     try {
@@ -81,7 +85,7 @@ const ClassDetail = () => {
 
   // Filter students
   const filteredStudents = classData?.students.filter((student) =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     student.email.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
@@ -196,15 +200,25 @@ const ClassDetail = () => {
         <Card variant="elevated" padding="lg">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900">學生列表</h2>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜尋學生..."
-                className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜尋學生..."
+                  className="pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <Button
+                variant="primary"
+                onClick={() => setShowAddStudentsModal(true)}
+                className="flex items-center gap-2"
+              >
+                <UserPlus className="w-4 h-4" />
+                新增學生
+              </Button>
             </div>
           </div>
 
@@ -225,21 +239,21 @@ const ClassDetail = () => {
                   className="py-3 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    {student.avatar ? (
+                    {student.avatarUrl ? (
                       <img
-                        src={student.avatar}
-                        alt={student.name}
+                        src={student.avatarUrl}
+                        alt={student.displayName}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
                         <span className="text-indigo-600 font-medium">
-                          {student.name.charAt(0)}
+                          {student.displayName.charAt(0)}
                         </span>
                       </div>
                     )}
                     <div>
-                      <p className="font-medium text-gray-900">{student.name}</p>
+                      <p className="font-medium text-gray-900">{student.displayName}</p>
                       <p className="text-sm text-gray-500">{student.email}</p>
                     </div>
                   </div>
@@ -254,7 +268,7 @@ const ClassDetail = () => {
                       </div>
                     )}
                     <button
-                      onClick={() => handleRemoveStudent(student._id, student.name)}
+                      onClick={() => handleRemoveStudent(student._id, student.displayName)}
                       disabled={removingStudent === student._id}
                       className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       title="移出班級"
@@ -280,6 +294,18 @@ const ClassDetail = () => {
             onUpdated={(updated) => {
               setClassData(updated);
               setShowEditModal(false);
+            }}
+          />
+        )}
+
+        {/* Add Students Modal */}
+        {showAddStudentsModal && (
+          <AddStudentsModal
+            classData={classData}
+            onClose={() => setShowAddStudentsModal(false)}
+            onAdded={() => {
+              setShowAddStudentsModal(false);
+              loadClass();
             }}
           />
         )}
@@ -421,6 +447,243 @@ const EditClassModal = ({
             </Button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+// Add Students Modal
+const AddStudentsModal = ({
+  classData,
+  onClose,
+  onAdded,
+}: {
+  classData: ClassData;
+  onClose: () => void;
+  onAdded: () => void;
+}) => {
+  const [allStudents, setAllStudents] = useState<StudentListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    setLoading(true);
+    try {
+      const result = await studentsService.list({ limit: 100 });
+      setAllStudents(result.data);
+    } catch (err) {
+      console.error('Failed to load students:', err);
+      setError('無法載入學生列表');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter out students already in the class
+  const existingStudentIds = new Set(classData.students.map((s) => s._id));
+  const availableStudents = allStudents.filter(
+    (s) => !existingStudentIds.has(s._id)
+  );
+
+  // Filter by search query
+  const filteredStudents = availableStudents.filter(
+    (s) =>
+      s.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleSelect = (studentId: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(studentId)) {
+      newSelected.delete(studentId);
+    } else {
+      newSelected.add(studentId);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(filteredStudents.map((s) => s._id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleSubmit = async () => {
+    if (selectedIds.size === 0) {
+      setError('請至少選擇一位學生');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
+    try {
+      const result = await classService.addStudents(
+        classData._id,
+        Array.from(selectedIds)
+      );
+      alert(result.message);
+      onAdded();
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : '新增失敗';
+      setError(errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">新增學生到班級</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              選擇要加入「{classData.name}」的學生
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Search & Actions */}
+        <div className="p-4 border-b bg-gray-50">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜尋學生姓名或 Email..."
+                className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <button
+              onClick={selectAll}
+              className="text-sm text-indigo-600 hover:text-indigo-700"
+            >
+              全選
+            </button>
+            <button
+              onClick={deselectAll}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              取消全選
+            </button>
+          </div>
+          {selectedIds.size > 0 && (
+            <p className="text-sm text-indigo-600 mt-2">
+              已選擇 {selectedIds.size} 位學生
+            </p>
+          )}
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Student List */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-500 border-t-transparent mx-auto mb-2" />
+              <p className="text-gray-500 text-sm">載入中...</p>
+            </div>
+          ) : filteredStudents.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-gray-500">
+                {availableStudents.length === 0
+                  ? '所有學生都已在班級中'
+                  : '找不到符合的學生'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredStudents.map((student) => (
+                <label
+                  key={student._id}
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedIds.has(student._id)
+                      ? 'bg-indigo-50 border-2 border-indigo-500'
+                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(student._id)}
+                    onChange={() => toggleSelect(student._id)}
+                    className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  />
+                  {student.avatarUrl ? (
+                    <img
+                      src={student.avatarUrl}
+                      alt={student.displayName}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                      <span className="text-indigo-600 font-medium">
+                        {student.displayName.charAt(0)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">
+                      {student.displayName}
+                    </p>
+                    <p className="text-sm text-gray-500">{student.email}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <Star className="w-4 h-4 fill-amber-500" />
+                    <span className="text-sm font-medium">
+                      Lv.{student.level}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t bg-gray-50 flex gap-3">
+          <Button
+            variant="secondary"
+            className="flex-1"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            className="flex-1"
+            onClick={handleSubmit}
+            loading={submitting}
+            disabled={submitting || selectedIds.size === 0}
+          >
+            新增 {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+          </Button>
+        </div>
       </div>
     </div>
   );

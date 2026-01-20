@@ -25,9 +25,9 @@ export interface ClassData {
 
 export interface StudentInClass {
   _id: string;
-  name: string;
+  displayName: string;
   email: string;
-  avatar?: string;
+  avatarUrl?: string;
   studentProfile?: {
     level: number;
     exp: number;
