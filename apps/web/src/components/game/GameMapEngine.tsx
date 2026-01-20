@@ -422,7 +422,7 @@ export const GameMapEngine: React.FC<GameMapEngineProps> = ({
 
       ctx.save();
 
-      if (anim.flip) {
+      if ('flip' in anim && anim.flip) {
         ctx.translate(playerScreenX + renderTileSize, playerScreenY);
         ctx.scale(-1, 1);
         ctx.drawImage(

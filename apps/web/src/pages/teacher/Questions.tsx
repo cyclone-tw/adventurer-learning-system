@@ -358,13 +358,13 @@ const QuestionsPage = () => {
                         {/* Stats */}
                         <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
                           <span>
-                            正確率: {question.correctRate}%
+                            正確率: {question.correctRate ?? 0}%
                           </span>
                           <span>
-                            作答次數: {question.stats.totalAttempts}
+                            作答次數: {question.stats?.totalAttempts ?? 0}
                           </span>
                           <span>
-                            經驗值: {question.baseExp} / 金幣: {question.baseGold}
+                            經驗值: {question.baseExp ?? 0} / 金幣: {question.baseGold ?? 0}
                           </span>
                         </div>
                       </div>

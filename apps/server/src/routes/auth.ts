@@ -25,8 +25,10 @@ router.get('/me', authenticate, getMe);
 router.get(
   '/google',
   passport.authenticate('google', {
-    scope: ['profile', 'email'],
+    scope: ['openid', 'profile', 'email'],
     session: false,
+    accessType: 'offline',
+    prompt: 'consent',
   })
 );
 

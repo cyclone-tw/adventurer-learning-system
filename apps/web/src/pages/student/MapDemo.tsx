@@ -6,8 +6,7 @@ import { GameMapData, PlayerMapState, MapObject } from '../../services/gameMap';
 const DEMO_MAP: GameMapData = {
   _id: 'demo-map',
   name: '數學森林',
-  subject: '數學',
-  description: '一片充滿數學精靈的神秘森林',
+  description: '一片充滿數學精靈的神秘森林（數學）',
   theme: 'forest',
   backgroundUrl: '',
   tilesetUrl: '',
@@ -52,7 +51,8 @@ const DEMO_MAP: GameMapData = {
         name: '史萊姆',
         imageUrl: '/assets/sprites/characters/slime.png',
         difficulty: 'easy',
-        questionPool: { subject: '數學', count: 3 },
+        hp: 100,
+        questionPool: { subjectId: 'math', count: 3 },
         rewards: { exp: 50, gold: 20 },
         respawnTime: 300,
       },
@@ -67,7 +67,8 @@ const DEMO_MAP: GameMapData = {
         name: '骷髏戰士',
         imageUrl: '/assets/sprites/characters/skeleton.png',
         difficulty: 'medium',
-        questionPool: { subject: '數學', count: 5 },
+        hp: 200,
+        questionPool: { subjectId: 'math', count: 5 },
         rewards: { exp: 100, gold: 50 },
         respawnTime: 600,
       },
@@ -82,7 +83,8 @@ const DEMO_MAP: GameMapData = {
         name: '史萊姆',
         imageUrl: '/assets/sprites/characters/slime.png',
         difficulty: 'easy',
-        questionPool: { subject: '數學', count: 3 },
+        hp: 100,
+        questionPool: { subjectId: 'math', count: 3 },
         rewards: { exp: 50, gold: 20 },
         respawnTime: 300,
       },
@@ -155,12 +157,15 @@ const DEMO_MAP: GameMapData = {
 };
 
 const INITIAL_PLAYER_STATE: PlayerMapState = {
-  mapId: 'demo-map',
   position: { x: 3, y: 7 },
   direction: 'right',
-  completedObjects: [],
-  currentQuests: [],
-  lastUpdated: new Date(),
+  stats: {
+    totalVisits: 1,
+    monstersDefeated: 0,
+    chestsOpened: 0,
+    timeSpent: 0,
+  },
+  firstEntry: true,
 };
 
 const MapDemo = () => {

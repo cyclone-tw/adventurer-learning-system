@@ -79,8 +79,14 @@ export interface GameMapData {
     obstacles: number[][];
     decorations: number[][];
   };
-  spawnPoint: { x: number; y: number };
+  spawnPoint?: { x: number; y: number };
   objects: MapObject[];
+  requirements?: {
+    levelRequired: number;
+    questsRequired?: string[];
+  };
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface PlayerMapState {

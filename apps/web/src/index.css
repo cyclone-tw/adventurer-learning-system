@@ -1,9 +1,9 @@
+/* RPG 遊戲主題樣式 - 必須在 @tailwind 之前 */
+@import './styles/rpg-theme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* RPG 遊戲主題樣式 */
-@import './styles/rpg-theme.css';
 
 body {
   margin: 0;

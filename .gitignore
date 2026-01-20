@@ -13,6 +13,8 @@ build
 *.env
 secrets.md
 credentials.json
+測試帳號.md
+TEST_ACCOUNTS.md
 
 # IDE
 .vscode
