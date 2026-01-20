@@ -1,49 +1,216 @@
-# 專案進度摘要 (Progress Summary)
+# 開發進度追蹤 (Development Progress)
 
-> 最後更新：2025-01-17
-
----
-
-## ✅ 已完成
-
-### 地圖探索系統
-- [x] GameMapEngine 整合像素素材渲染
-- [x] 玩家角色精靈圖 + 四方向動畫
-- [x] 怪物精靈圖（史萊姆、骷髏）
-- [x] 寶箱、NPC、傳送門等物件渲染
-- [x] Tileset 地磚渲染（草地、樹木）
-- [x] Demo 測試頁面 (`/demo/map`)
-- [x] 鍵盤控制（WASD/方向鍵）
-- [x] 虛擬搖桿（手機/平板）
-- [x] 物件互動提示
-
-### 素材整合
-- [x] 素材放置於 `apps/web/public/assets/sprites/`
-  - `characters/` - 玩家、骷髏、史萊姆
-  - `objects/` - 寶箱、水中石頭
-  - `particles/` - 粒子特效
-  - `tilesets/` - 草地、水、圍欄、裝飾
-
-### Git 設定
-- [x] 專案獨立成單獨的 git repo（從 workspace 分離）
+> 最後更新：2025-01-20
 
 ---
 
-## 🔜 待處理
+## 📊 總覽
 
-### 優先處理（下次繼續）
-- [ ] 後台系統 debug
-- [ ] 題目系統 debug
+| 項目 | 數量 | 完成度 |
+|------|------|--------|
+| 後端 API Routes | 25 | ✅ 100% |
+| 後端 Controllers | 24 | ✅ 100% |
+| 資料模型 (Models) | 22 | ✅ 100% |
+| 前端頁面 | 29 | ✅ 100% |
+| 前端服務 (Services) | 19 | ✅ 100% |
+| UI 組件 | 18+ | ✅ 100% |
 
-### 地圖/UI 升級（之後處理）
-- [ ] 3D 風格地圖（等距 2.5D 或 react-three-fiber）
-- [ ] 戰鬥畫面 UI（RPG 風格）
-- [ ] 更多地圖主題（城堡、洞穴、雪地等）
+---
 
-### 其他待辦
-- [ ] 修復 Mongoose 重複索引警告
-- [ ] 音效整合
-- [ ] PWA 離線支援
+## ✅ 已完成功能
+
+### 1. 認證系統 (Authentication)
+- [x] 使用者註冊（學生/教師/管理員）
+- [x] 帳號密碼登入
+- [x] JWT Token 認證
+- [x] Google OAuth 2.0 登入
+- [x] 角色權限控制
+- [x] 最後登入時間記錄
+
+### 2. 教科書架構系統 (Curriculum)
+- [x] 科目管理 (CRUD)
+- [x] 學年度管理 (CRUD)
+- [x] 教學單元管理 (CRUD)
+- [x] 科目/學年度/單元關聯
+
+### 3. 題目管理系統 (Question Bank)
+- [x] 題目 CRUD
+- [x] 多種題型支援（單選、多選、填空、是非）
+- [x] 難度分級（簡單、中等、困難）
+- [x] 題目篩選（科目、單元、難度）
+- [x] 批量匯入（CSV/Excel）
+- [x] 題目統計數據
+- [x] 媒體上傳（圖片）
+
+### 4. 班級管理系統 (Classes)
+- [x] 班級 CRUD
+- [x] 班級邀請碼系統
+- [x] 學生加入/退出班級
+- [x] **教師手動新增學生到班級** _(2025-01-20)_
+- [x] 班級成員列表
+- [x] 班級統計數據
+
+### 5. 學生管理系統 (Students)
+- [x] 學生列表（支援搜尋、排序、分頁）
+- [x] **學生所屬班級標籤顯示** _(2025-01-20)_
+- [x] 學生詳情頁面
+- [x] **學生班級管理（加入/移除班級）** _(2025-01-20)_
+- [x] **教師編輯學生帳號密碼** _(2025-01-20)_
+- [x] 學生學習統計
+- [x] 學習趨勢分析
+- [x] 弱點單元分析
+- [x] 答題歷史記錄
+- [x] 學生報表匯出（PDF/Excel）
+
+### 6. 答題系統 (Question Attempts)
+- [x] 提交答題
+- [x] 自動判斷正確性
+- [x] 經驗值/金幣獎勵計算
+- [x] 答題時間記錄
+- [x] 答題歷史查詢
+- [x] 答題統計分析
+
+### 7. 遊戲化機制 (Gamification)
+- [x] 經驗值系統
+- [x] 等級升級系統
+- [x] 金幣獎勵系統
+- [x] 連勝獎勵機制
+
+### 8. 成就系統 (Achievements)
+- [x] 成就定義管理
+- [x] 成就解鎖判定
+- [x] 成就獎勵發放
+- [x] 玩家成就列表
+- [x] 成就解鎖通知
+
+### 9. 排行榜系統 (Leaderboard)
+- [x] 等級排行榜
+- [x] 經驗值排行榜
+- [x] 金幣排行榜
+- [x] 正確率排行榜
+- [x] 週期篩選（每日/每週/每月/全部）
+
+### 10. 商店系統 (Shop)
+- [x] 商品列表
+- [x] 購買道具（金幣扣款）
+- [x] 購買條件檢查（等級、金幣）
+- [x] 道具管理 (CRUD)
+
+### 11. 背包系統 (Inventory)
+- [x] 玩家背包
+- [x] 道具裝備/卸下
+- [x] 道具丟棄
+- [x] 裝備效果顯示
+
+### 12. 角色裝扮系統 (Avatar/Paper Doll)
+- [x] 角色部件管理
+- [x] 多部件類型（頭銜、頭部、身體、配飾、背景、特效）
+- [x] 角色自訂（膚色、髮色、眼睛顏色）
+- [x] 裝備穿戴
+- [x] 稀有度系統
+- [x] 角色渲染組件
+
+### 13. 關卡系統 (Stages)
+- [x] 關卡管理 (CRUD)
+- [x] 關卡進度追蹤
+- [x] 關卡完成獎勵
+- [x] 關卡解鎖條件
+
+### 14. 每日任務系統 (Daily Tasks)
+- [x] 任務定義管理
+- [x] 每日任務生成
+- [x] 任務完成判定
+- [x] 任務獎勵領取
+
+### 15. 公告系統 (Announcements)
+- [x] 公告 CRUD
+- [x] 班級公告
+- [x] 公告橫幅顯示
+
+### 16. 地圖系統 (Game Maps)
+- [x] 地圖管理 (CRUD)
+- [x] 多主題支援（森林、城堡、洞穴等）
+- [x] 地圖物件（怪物、NPC、寶箱、傳送門）
+- [x] 玩家地圖狀態保存
+- [x] Canvas 2D 地圖引擎
+- [x] 碰撞檢測
+- [x] 視角跟隨
+- [x] Sprite 動畫系統
+- [x] 玩家/怪物/NPC 精靈圖
+- [x] Tileset 地磚渲染
+
+### 17. 觸控支援 (Touch Support)
+- [x] 虛擬搖桿組件
+- [x] 觸控輸入解析
+- [x] 響應式設計
+
+### 18. 報表系統 (Reports)
+- [x] 班級報表
+- [x] 學生個人報表
+- [x] 學習曲線分析
+- [x] 科目統計
+- [x] 難度分析
+- [x] PDF/Excel 匯出
+
+### 19. 管理員功能 (Admin)
+- [x] 使用者管理
+- [x] 平台統計數據
+
+---
+
+## 📈 最近更新 (Recent Updates)
+
+### 2025-01-20
+- ✅ 新增：班級詳情頁「新增學生」按鈕，教師可手動將學生加入班級
+- ✅ 新增：學生列表頁顯示每位學生所屬的班級標籤
+- ✅ 新增：學生詳情頁「所屬班級」區塊，可查看和管理學生的班級
+- ✅ 新增：教師編輯學生帳號密碼功能（PATCH /students/:studentId）
+- ✅ 修正：後端 API 返回正確的學生欄位名稱 (displayName, avatarUrl)
+- ✅ 修正：題目管理頁面 undefined stats 錯誤
+
+### 2025-01-19
+- ✅ 新增：地圖引擎（GameMapEngine）與 Sprite 素材
+- ✅ 新增：地圖演示頁面（MapDemo）
+
+---
+
+## 🏗️ 系統架構
+
+```
+前端 (React + Vite + Tailwind)
+├── 學生端頁面 (11 頁)
+│   ├── Dashboard, Classes, Adventure, Exploration
+│   ├── Avatar, Shop, Inventory
+│   ├── Achievements, Leaderboard, DailyTasks
+│   └── MapDemo
+├── 教師端頁面 (16 頁)
+│   ├── Dashboard, Classes, ClassDetail
+│   ├── Students, StudentDetail
+│   ├── Questions, QuestionEditor
+│   ├── Curriculum, UnitDetail
+│   ├── Stages, StageEditor
+│   ├── Items, AvatarParts, GameMaps
+│   ├── Announcements, Reports
+│   └──
+├── 管理員頁面 (2 頁)
+│   └── Users
+├── UI 組件 (18+)
+│   ├── Button, Card, ProgressBar
+│   ├── StudentLayout, TeacherLayout
+│   ├── GamePanel, GameButton, GameDialog
+│   ├── VirtualJoystick, InventorySlot
+│   └── ToastContainer, AchievementPopup
+└── 遊戲組件
+    ├── GameMapEngine
+    ├── BattleScene
+    └── AvatarRenderer
+
+後端 (Express + MongoDB)
+├── 25 個 API Routes
+├── 24 個 Controllers
+├── 22 個 Data Models
+└── JWT + Google OAuth 認證
+```
 
 ---
 
@@ -53,10 +220,11 @@
 |------|------|
 | `apps/web/src/components/game/GameMapEngine.tsx` | 地圖引擎核心 |
 | `apps/web/src/pages/student/MapDemo.tsx` | 地圖 Demo 頁面 |
-| `apps/web/src/pages/student/Exploration.tsx` | 正式地圖探索頁面 |
+| `apps/web/src/pages/teacher/StudentDetail.tsx` | 學生詳情頁（含班級管理） |
+| `apps/web/src/pages/teacher/ClassDetail.tsx` | 班級詳情頁（含新增學生） |
+| `apps/server/src/controllers/studentController.ts` | 學生 API 控制器 |
 | `apps/web/public/assets/sprites/` | 遊戲素材目錄 |
-| `specs/MAP_BATTLE_SYSTEM.md` | 地圖戰鬥系統規格 |
-| `specs/UI_DESIGN.md` | UI 設計規格 |
+| `specs/` | 規格文件目錄 |
 
 ---
 
@@ -66,39 +234,18 @@
 # 啟動開發伺服器
 pnpm dev
 
-# 開啟地圖 Demo
-http://localhost:5173/demo/map
-```
-
-### Demo 操作
-- `W/↑` 向上、`S/↓` 向下、`A/←` 向左、`D/→` 向右
-- `空白鍵` 互動
-- `ESC` 離開
-
----
-
-## 💡 下次對話提示
-
-可以直接告訴 Claude：
-
-```
-請閱讀 PROGRESS.md 了解目前進度，
-然後幫我處理「後台系統 debug」或「題目系統 debug」
+# 測試帳號
+教師：teacher@test.com / password123
+學生：student@test.com / password123
 ```
 
 ---
 
-## 📝 開發筆記
+## 📝 備註
 
-### 素材規格
-- 玩家/骷髏：48x48 像素，多列動畫（idle/移動/攻擊/死亡）
-- 史萊姆：32x32 像素
-- Tileset：16x16 像素，放大至 48x48 渲染
-
-### 3D 升級選項（之後參考）
-1. **等距 2.5D** - 不需新素材，改渲染邏輯
-2. **react-three-fiber** - 需安裝 `three @react-three/fiber @react-three/drei`
-3. **CSS 3D** - 用 perspective 傾斜畫面
+- 本文件會隨著開發進度持續更新
+- 詳細的待開發項目請參考 [BACKLOG.md](./BACKLOG.md)
+- 規格文件請參考 `/specs` 目錄
 
 ---
 

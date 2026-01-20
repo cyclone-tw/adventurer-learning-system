@@ -2,6 +2,15 @@
 
 > 一個遊戲化的教育平台，讓學習變成一場冒險！
 
+## 📊 開發進度
+
+| 文件 | 說明 |
+|------|------|
+| [PROGRESS.md](./PROGRESS.md) | 開發進度追蹤、已完成功能清單 |
+| [BACKLOG.md](./BACKLOG.md) | 待開發清單、功能建議 |
+
+---
+
 ## 📚 Spec 文件總覽
 
 本專案採用 **Spec-Driven Development**，所有規格文件位於 `/specs` 目錄：
